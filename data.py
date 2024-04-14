@@ -1,7 +1,6 @@
 from typing import Dict, Any, Tuple
 import os
 import numpy as np
-from jax._src.typing import Array
 import jax.numpy as jnp
 
 
@@ -27,7 +26,7 @@ class Dataloader():
         self.block_size = block_size
         
     
-    def get_batch(self) -> Tuple[Array, Array]:
+    def get_batch(self) -> Tuple[jnp.ndarray, jnp.ndarray]:
         start_inds = np.random.randint(0, len(self.tokens) - self.block_size, self.batch_size)
         x = np.stack([self.tokens[start:start + self.block_size] for start in start_inds])
         y = np.stack([self.tokens[start + 1:start + self.block_size + 1] for start in start_inds])
