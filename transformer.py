@@ -1,6 +1,4 @@
-import jax
-from jax import random, numpy as jnp
-import flax
+from jax import numpy as jnp
 from flax import linen as nn
 
 
@@ -27,16 +25,16 @@ class MLP(nn.Module):
 class CausalMultiheadAttention(nn.Module):
     n_embd: int
     heads: int
-    attn_dropout: float = 0.5
-    out_dropout: float = 0.5
+    p_attn_dropout: float = 0.5
+    p_out_dropout: float = 0.5
 
     def setup(self):
         assert self.n_embd % self.heads == 0
         self.dim_per_head = self.n_embd // self.heads
         
         self.qkv = nn.Dense(3 * self.n_embd)
-        self.attn_dropout = nn.Dropout(rate=self.attn_dropout)
-        self.out_dropout = nn.Dropout(rate=self.out_dropout)
+        self.attn_dropout = nn.Dropout(rate=self.p_attn_dropout)
+        self.out_dropout = nn.Dropout(rate=self.p_out_dropout)
         
     def __call__(self, x, training: bool):
         B, T, _ = x.shape
@@ -49,8 +47,8 @@ class CausalMultiheadAttention(nn.Module):
         
         # causal mask
         causal_mask = jnp.tril(jnp.ones((T, T)))
-        bias = - float("inf") * (1.0 - causal_mask)
-        attn += bias[None, None, :, :]
+        bias = jnp.full((T, T), -jnp.inf)
+        attn = jnp.where(causal_mask == 0, bias, attn)
         attn = nn.softmax(attn, axis=-1)
         attn = self.attn_dropout(attn, deterministic=not training)
         
